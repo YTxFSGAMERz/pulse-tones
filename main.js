@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 const LOG_FILE = path.join(__dirname, 'startup.log');
 function log(msg, err) {
     const text = `[${new Date().toISOString()}] ${msg} ${err ? err.stack || err : ''}\n`;
@@ -71,6 +73,7 @@ function createWindow() {
                 contextIsolation: true,
                 sandbox: false,
                 nodeIntegration: false,
+                autoplayPolicy: 'no-user-gesture-required',
             },
         });
         log('BrowserWindow instance created');

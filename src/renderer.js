@@ -1,6 +1,14 @@
 // src/renderer.js - Main Renderer Controller for PulseTones
 'use strict';
 
+window.onerror = function (msg, url, lineNo, columnNo, error) {
+    console.error(`[Renderer Window Error] ${msg} at ${url}:${lineNo}:${columnNo}`, error);
+    return false;
+};
+window.addEventListener('unhandledrejection', function (event) {
+    console.error('[Renderer Unhandled Promise Rejection]', event.reason);
+});
+
 const {
     SmartSpectraSDK,
     ProcessingStatus,
@@ -98,6 +106,7 @@ async function initApp() {
     synth = new BioSynth();
     synth.onHeartbeat = (bpm) => {
         if (visualizer) visualizer.triggerHeartbeat(bpm);
+        if (demoFace) demoFace.triggerHeartbeat();
     };
 
     // 4. Initialize Synthetic Simulator
@@ -283,18 +292,34 @@ function startSimulation() {
     isSimulationRunning = true;
     simulator.start();
 
-    // Show Demo Holographic Face Scanner
-    els.preview.style.display = 'none';
+    // Load AI Photorealistic Subject Video into camera preview
+    if (!els.preview.src || !els.preview.src.includes('demo-face.mp4')) {
+        els.preview.srcObject = null;
+        els.preview.src = 'assets/demo-face.mp4';
+    }
+    els.preview.defaultMuted = true;
+    els.preview.muted = true;
+    els.preview.playsInline = true;
+    els.preview.loop = true;
+    els.preview.style.display = 'block';
+    const playPromise = els.preview.play();
+    if (playPromise !== undefined) {
+        playPromise.catch((e) => console.log('Preview video autoplay notice:', e.name, e.message));
+    }
+
+    // Keep AI Biometric Scanner Canvas active over the video
     els.demoFaceCanvas.style.display = 'block';
+    if (demoFace) demoFace.resize();
+
     els.cameraPlaceholder.style.display = 'none';
-    els.cameraModeLabel.textContent = 'rPPG Optical Scan (Demo Mode)';
+    els.cameraModeLabel.textContent = 'AI Optical rPPG Scan (Benchmark)';
     if (els.btnQuickSwitch) els.btnQuickSwitch.style.display = 'flex';
 
     els.btnCameraText.textContent = 'Switch to Live Webcam';
     els.btnToggleCamera.className = 'btn btn-secondary';
 
-    updateStatusBadge('simulation', 'Demo Bio-Simulation Active');
-    showValidationHint('Running High-Fidelity Bio-Waveform Simulation (No Camera Required)', 'ok');
+    updateStatusBadge('simulation', 'AI Demo Simulation Active');
+    showValidationHint('AI Subject Loaded · Real-time rPPG Biometric Scan Active', 'ok');
 }
 
 function handleSimulatorMetrics(data) {
@@ -378,16 +403,19 @@ async function startLiveCamera() {
         els.btnCameraText.textContent = 'Switch to Demo Simulation';
         els.btnToggleCamera.className = 'btn btn-secondary';
 
-        els.demoFaceCanvas.style.display = 'none';
+        els.preview.src = '';
         els.preview.style.display = 'block';
+        els.demoFaceCanvas.style.display = 'block';
+        if (demoFace) demoFace.resize();
+
         els.cameraModeLabel.textContent = 'Live Webcam Stream (rPPG)';
         if (els.btnQuickSwitch) els.btnQuickSwitch.style.display = 'none';
 
         updateStatusBadge('running', 'Live Camera Measuring');
     } catch (err) {
         console.error('Failed to start SmartSpectra SDK:', err);
-        updateStatusBadge('error', 'SDK Error');
-        showValidationHint(`Error: ${err.message || 'Check Camera'}`, 'err');
+        updateStatusBadge('error', 'SDK Camera Notice');
+        showValidationHint(`Camera Notice: ${err.message || 'Falling back to AI Demo'}`, 'warn');
         els.btnToggleCamera.disabled = false;
         stopLiveCamera();
         startSimulation();
@@ -407,10 +435,12 @@ function buildSdk() {
     });
 
     sdk.on('streamAvailable', (stream) => {
+        els.preview.src = '';
         els.preview.srcObject = stream;
         els.preview.play().catch(() => {});
-        els.demoFaceCanvas.style.display = 'none';
+        els.demoFaceCanvas.style.display = 'block';
         els.preview.style.display = 'block';
+        if (demoFace) demoFace.resize();
     });
 
     sdk.on('processingStatus', (status) => {
@@ -512,8 +542,6 @@ async function stopLiveCamera() {
     }
 
     els.preview.srcObject = null;
-    els.preview.style.display = 'none';
-    els.demoFaceCanvas.style.display = 'block';
     els.btnToggleCamera.disabled = false;
     els.btnCameraText.textContent = 'Switch to Live Webcam';
     els.btnToggleCamera.className = 'btn btn-secondary';

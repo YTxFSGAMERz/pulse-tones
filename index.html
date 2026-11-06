@@ -25,9 +25,9 @@
 
         <div class="header-controls">
             <!-- Active Mode Badge -->
-            <div id="status-badge" class="status-badge simulation">
+            <div id="status-badge" class="status-badge starting">
                 <span class="status-dot"></span>
-                <span id="status-text">Demo Bio-Simulation Active</span>
+                <span id="status-text">Connecting Live Camera...</span>
             </div>
 
             <!-- Demo Quick Action Triggers for Video -->
@@ -40,10 +40,10 @@
                 </button>
             </div>
 
-            <!-- Live Camera Switch -->
+            <!-- Live Camera / Simulation Switch -->
             <button id="btn-toggle-camera" class="btn btn-secondary">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                <span id="btn-camera-text">Switch to Live Webcam</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <span id="btn-camera-text">Switch to Demo Simulation</span>
             </button>
 
             <!-- Privacy & Settings -->
@@ -63,9 +63,9 @@
         <canvas id="bio-canvas"></canvas>
 
         <!-- Dynamic Validation Pill -->
-        <div id="validation-pill" class="validation-pill ok">
+        <div id="validation-pill" class="validation-pill warn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span id="validation-text">Demo Simulation Active — Physiological Audio Synced</span>
+            <span id="validation-text">Initializing webcam & calibrating rPPG...</span>
         </div>
 
         <!-- Metric HUD Cards (Left Column) -->
@@ -125,15 +125,15 @@
         <!-- Optical Scanner / Face Preview (Top Right) -->
         <div class="hud-camera-container">
             <div class="camera-preview-box">
-                <video id="preview" autoplay muted playsinline style="display: none;"></video>
-                <canvas id="demo-face-canvas"></canvas>
+                <video id="preview" autoplay muted playsinline></video>
+                <canvas id="demo-face-canvas" style="display: none;"></canvas>
                 <div id="camera-placeholder" class="camera-placeholder" style="display: none;">
                     <span>Camera Standby</span>
                 </div>
             </div>
             <div class="camera-caption-pill">
                 <span class="camera-dot"></span>
-                <span id="camera-mode-label">rPPG Optical Scan (Demo Mode)</span>
+                <span id="camera-mode-label">Live Webcam Stream (rPPG)</span>
             </div>
         </div>
 

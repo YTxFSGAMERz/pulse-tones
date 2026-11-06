@@ -124,12 +124,12 @@ async function initApp() {
     const hasConsented = localStorage.getItem('pulsetones_consented') === 'true';
     if (!hasConsented && els.modalConsent) {
         els.modalConsent.classList.add('active');
+    } else {
+        // Boot directly to Live Camera Mode by default!
+        startLiveCamera();
     }
 
     setupEventListeners();
-
-    // 7. Auto-start in Demo Mode by default (100% camera-free)
-    startSimulation();
 }
 
 function setupEventListeners() {
@@ -137,9 +137,7 @@ function setupEventListeners() {
     els.btnConsentAgree?.addEventListener('click', () => {
         localStorage.setItem('pulsetones_consented', 'true');
         els.modalConsent.classList.remove('active');
-        if (!synth.isRunning) {
-            synth.init();
-        }
+        startLiveCamera();
     });
 
     els.btnOpenPrivacy?.addEventListener('click', () => {
@@ -370,8 +368,8 @@ async function startLiveCamera() {
 
         isLiveCameraRunning = true;
         els.btnToggleCamera.disabled = false;
-        els.btnCameraText.textContent = 'Switch to Demo Mode';
-        els.btnToggleCamera.className = 'btn btn-primary';
+        els.btnCameraText.textContent = 'Switch to Demo Simulation';
+        els.btnToggleCamera.className = 'btn btn-secondary';
 
         els.demoFaceCanvas.style.display = 'none';
         els.preview.style.display = 'block';

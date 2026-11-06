@@ -23,14 +23,18 @@ To make the app instantly accessible to anyone without requiring them to sit in 
 
 ## Demo
 
-<!-- Paste your YouTube, Vimeo, or Loom video link below -->
-*(Demo walkthrough: shows camera initialization, face alignment, live pulse & respiration waveforms locking in, and the Web Audio synthesizer responding dynamically to deep breaths and smiles)*
+![PulseTones Live Bio-Acoustic Generative Experience](https://raw.githubusercontent.com/YTxFSGAMERz/pulse-tones/master/assets/pulse-tones-demo.gif)
 
-> **Interactive Experience Highlights:**
-> 1. **Live Camera & Demo Mode Toggle:** Seamless zero-friction switching between live webcam rPPG sensing and photorealistic AI subject benchmark simulation.
-> 2. **Bioluminescent Sacred Mandala:** Central 60fps canvas engine expanding on respiration and radiating shockwaves on each cardiac pulse.
-> 3. **Dual Elevated Oscilloscopes:** Real-time arterial pulse waveform (`♥ Arterial Pulse`) in neon magenta and respiratory tidal wave (`≋ Respiration Tidal Wave`) in luminous cyan.
-> 4. **Procedural Web Audio Engine:** Switchable harmonic environments: *Celestial Calm (C Minor 9)*, *Deep Forest (D Pentatonic)*, and *Ocean Mist (A Sus2)*.
+> 🎬 **Zero-Friction Evaluation:**  
+> The application includes a self-contained, pre-calibrated **Photorealistic AI Benchmark Subject Demo Mode** bundled into the repository. Judges and users can evaluate the full real-time rPPG optical scanning and dynamic Web Audio synthesis immediately upon running `npm start`—with no camera access, personal recording, or extra setup required!
+>
+> 📽️ **High-Resolution Video Clip:** [Download / View MP4 on GitHub](https://github.com/YTxFSGAMERz/pulse-tones/blob/master/assets/pulse-tones-demo.mp4?raw=true)
+
+### Interactive Experience Highlights:
+1. **Live Camera & Demo Mode Toggle:** Seamless zero-friction switching between live webcam rPPG sensing and photorealistic AI subject benchmark simulation.
+2. **Bioluminescent Sacred Mandala:** Central 60fps canvas engine expanding on respiration and radiating shockwaves on each cardiac pulse.
+3. **Dual Elevated Oscilloscopes:** Real-time arterial pulse waveform (`♥ Arterial Pulse`) in neon magenta and respiratory tidal wave (`≋ Respiration Tidal Wave`) in luminous cyan.
+4. **Procedural Web Audio Engine:** Switchable harmonic environments: *Celestial Calm (C Minor 9)*, *Deep Forest (D Pentatonic)*, and *Ocean Mist (A Sus2)*.
 
 ---
 

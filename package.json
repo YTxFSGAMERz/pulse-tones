@@ -1,0 +1,31 @@
+{
+  "name": "pulse-tones",
+  "version": "1.0.0",
+  "description": "Real-time bio-acoustic generative soundscape powered by Presage SmartSpectra SDK",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild src/renderer.js --bundle --outfile=dist/renderer.bundle.js --platform=browser --format=iife --log-level=warning",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win --x64"
+  },
+  "keywords": [
+    "smartspectra",
+    "presage",
+    "vitals",
+    "rppg",
+    "web-audio",
+    "generative-music",
+    "biofeedback",
+    "electron"
+  ],
+  "author": "YTxFSGAMERz",
+  "license": "MIT",
+  "dependencies": {
+    "@smartspectra/node-sdk": "^3.4.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "esbuild": "^0.25.0"
+  }
+}

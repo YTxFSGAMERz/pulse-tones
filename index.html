@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob: 'unsafe-inline'; worker-src 'self' blob:; media-src 'self' blob:;">
+    <title>PulseTones — Bio-Acoustic Generative Soundscape</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- App Header -->
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <h1>PulseTones</h1>
+                <p>Presage SmartSpectra Bio-Acoustic Experience</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <div id="status-badge" class="status-badge">
+                <span class="status-dot"></span>
+                <span id="status-text">Standby</span>
+            </div>
+
+            <button id="btn-toggle-camera" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>Start Live Camera</span>
+            </button>
+
+            <button id="btn-toggle-sim" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <span>Demo Simulation</span>
+            </button>
+
+            <button id="btn-open-settings" class="btn btn-secondary" title="API Key & Setup">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+
+            <button id="btn-open-privacy" class="btn btn-secondary" title="Camera Privacy & Consent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Consent</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Bio-Acoustic Experience -->
+    <main>
+        <!-- 60fps Bioluminescent Visualizer Canvas -->
+        <canvas id="bio-canvas"></canvas>
+
+        <!-- Dynamic Validation Pill -->
+        <div id="validation-pill" class="validation-pill ok" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span id="validation-text">Align face in frame</span>
+        </div>
+
+        <!-- Metric HUD Cards (Left Overlay) -->
+        <div class="hud-metrics-container">
+            <!-- Heart Rate Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Pulse Rate (rPPG)</span>
+                    <span id="pulse-heart-icon" class="metric-icon-pulse">♥</span>
+                </div>
+                <div class="metric-value-row">
+                    <span id="readout-pulse" class="metric-number">--</span>
+                    <span class="metric-unit">BPM</span>
+                </div>
+                <div id="subtext-pulse" class="metric-subtext">Waiting for signal...</div>
+            </div>
+
+            <!-- Respiration Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Respiration</span>
+                    <span style="color: var(--accent-cyan);">≋</span>
+                </div>
+                <div class="metric-value-row">
+                    <span id="readout-breathing" class="metric-number">--</span>
+                    <span class="metric-unit">RPM</span>
+                </div>
+                <div id="subtext-breathing" class="metric-subtext">Modulating Filter Cutoff</div>
+            </div>
+
+            <!-- HRV Autonomic Balance Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Autonomic Balance</span>
+                    <span style="color: #c084fc;">✦</span>
+                </div>
+                <div class="metric-value-row">
+                    <span id="readout-hrv" class="metric-number">--</span>
+                    <span class="metric-unit">ms</span>
+                </div>
+                <div id="subtext-hrv" class="metric-subtext">HRV Harmonic Shimmer</div>
+            </div>
+
+            <!-- Affect / Expression Card -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Expression</span>
+                    <span style="color: #fbbf24;">☺</span>
+                </div>
+                <div class="metric-value-row">
+                    <span id="readout-expression" class="metric-number" style="font-size: 1.25rem;">Serene</span>
+                </div>
+                <div id="subtext-expression" class="metric-subtext">Smile triggers harmonic chime</div>
+            </div>
+        </div>
+
+        <!-- Camera Inset (Right Overlay) -->
+        <div class="hud-camera-container">
+            <div class="camera-preview-box">
+                <video id="preview" autoplay muted playsinline></video>
+                <div id="camera-placeholder" class="camera-placeholder">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span>Camera Standby</span>
+                </div>
+                <div class="camera-overlay-target"></div>
+            </div>
+        </div>
+
+        <!-- Soundscape Floating Bar (Bottom Center) -->
+        <div class="hud-audio-bar">
+            <button id="btn-toggle-sound" class="btn btn-secondary" style="border-radius: 999px; padding: 6px 14px;">
+                <span id="sound-icon">🔊</span>
+                <span id="sound-text">Mute</span>
+            </button>
+
+            <select id="select-preset" class="audio-preset-select">
+                <option value="celestial">Celestial Calm (C Minor 9)</option>
+                <option value="forest">Deep Forest (D Pentatonic)</option>
+                <option value="ocean">Ocean Mist (A Sus2 Ethereal)</option>
+            </select>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Vol</span>
+                <input id="slider-volume" type="range" min="0" max="1" step="0.05" value="0.7" class="volume-slider">
+            </div>
+        </div>
+    </main>
+
+    <!-- Consent & Privacy Modal (Required for DEV challenge) -->
+    <div id="modal-consent" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Camera Consent & Data Handling</span>
+            </div>
+            <div class="modal-body">
+                <p>Welcome to <strong>PulseTones</strong>. This experience uses the <strong>Presage SmartSpectra SDK</strong> to measure physiological signals (pulse rate, respiration, and HRV) via remote photoplethysmography (rPPG) directly from your video feed.</p>
+                
+                <div class="privacy-highlight-box">
+                    <strong>🔒 Privacy-Preserving Architecture:</strong>
+                    <ul style="margin-left: 18px; margin-top: 6px;">
+                        <li>All video frames are analyzed <strong>strictly on-device in-memory</strong>.</li>
+                        <li>No video, facial images, or raw camera recordings are ever stored, written to disk, or transmitted to any external server.</li>
+                        <li>No biometric identification or facial recognition is performed.</li>
+                    </ul>
+                </div>
+
+                <div class="non-medical-box">
+                    <strong>⚠️ Non-Medical Disclaimer:</strong>
+                    PulseTones is strictly an artistic, bio-acoustic generative soundscape for wellness, reflection, and aesthetic delight. It is <strong>NOT</strong> a medical device, provides no diagnosis or treatment, and must never be used for clinical decision-making.
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-consent-agree" class="btn btn-primary" style="padding: 10px 24px;">I Understand & Consent</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings / API Key Modal -->
+    <div id="modal-settings" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Presage SmartSpectra Settings</span>
+            </div>
+            <div class="modal-body">
+                <p>Enter your <strong>Presage SmartSpectra Developer API Key</strong>. If you configured it via <code>.env</code>, it will be loaded automatically.</p>
+                <label style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">API Key</label>
+                <input id="input-api-key" type="password" class="input-field" placeholder="Paste your API key here...">
+                <p style="font-size: 0.75rem; color: var(--text-muted);">
+                    Don't have a key? Register for a free trial at <a href="#" id="link-register" style="color: var(--accent-cyan); text-decoration: underline;">physiology.presagetech.com</a>
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-save-settings" class="btn btn-primary">Save Key</button>
+                <button id="btn-close-settings" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bundled Renderer Script -->
+    <script src="dist/renderer.bundle.js"></script>
+</body>
+</html>

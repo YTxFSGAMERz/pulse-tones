@@ -15,40 +15,8 @@ const { BioSynth } = require('./audio/bioSynth');
 const { BioVisualizer } = require('./visuals/bioVisualizer');
 const { BioSimulator } = require('./simulator/bioSimulator');
 
-// DOM Element Handles
-const els = {
-    canvas:            document.getElementById('bio-canvas'),
-    preview:           document.getElementById('preview'),
-    cameraPlaceholder: document.getElementById('camera-placeholder'),
-    statusBadge:       document.getElementById('status-badge'),
-    statusText:        document.getElementById('status-text'),
-    btnToggleCamera:   document.getElementById('btn-toggle-camera'),
-    btnToggleSim:      document.getElementById('btn-toggle-sim'),
-    btnOpenSettings:   document.getElementById('btn-open-settings'),
-    btnOpenPrivacy:    document.getElementById('btn-open-privacy'),
-    validationPill:    document.getElementById('validation-pill'),
-    validationText:    document.getElementById('validation-text'),
-    readoutPulse:      document.getElementById('readout-pulse'),
-    subtextPulse:      document.getElementById('subtext-pulse'),
-    readoutBreathing:  document.getElementById('readout-breathing'),
-    subtextBreathing:  document.getElementById('subtext-breathing'),
-    readoutHrv:        document.getElementById('readout-hrv'),
-    subtextHrv:        document.getElementById('subtext-hrv'),
-    readoutExpression: document.getElementById('readout-expression'),
-    subtextExpression: document.getElementById('subtext-expression'),
-    btnToggleSound:    document.getElementById('btn-toggle-sound'),
-    soundIcon:         document.getElementById('sound-icon'),
-    soundText:         document.getElementById('sound-text'),
-    selectPreset:      document.getElementById('select-preset'),
-    sliderVolume:      document.getElementById('slider-volume'),
-    modalConsent:      document.getElementById('modal-consent'),
-    btnConsentAgree:   document.getElementById('btn-consent-agree'),
-    modalSettings:     document.getElementById('modal-settings'),
-    inputApiKey:       document.getElementById('input-api-key'),
-    btnSaveSettings:   document.getElementById('btn-save-settings'),
-    btnCloseSettings:  document.getElementById('btn-close-settings'),
-    linkRegister:      document.getElementById('link-register'),
-};
+// DOM Element Handles (populated in initApp)
+let els = {};
 
 // Core Engines
 let sdk = null;
@@ -77,13 +45,47 @@ const VALIDATION_MESSAGES = {
 };
 
 async function initApp() {
+    els = {
+        canvas:            document.getElementById('bio-canvas'),
+        preview:           document.getElementById('preview'),
+        cameraPlaceholder: document.getElementById('camera-placeholder'),
+        statusBadge:       document.getElementById('status-badge'),
+        statusText:        document.getElementById('status-text'),
+        btnToggleCamera:   document.getElementById('btn-toggle-camera'),
+        btnToggleSim:      document.getElementById('btn-toggle-sim'),
+        btnOpenSettings:   document.getElementById('btn-open-settings'),
+        btnOpenPrivacy:    document.getElementById('btn-open-privacy'),
+        validationPill:    document.getElementById('validation-pill'),
+        validationText:    document.getElementById('validation-text'),
+        readoutPulse:      document.getElementById('readout-pulse'),
+        subtextPulse:      document.getElementById('subtext-pulse'),
+        readoutBreathing:  document.getElementById('readout-breathing'),
+        subtextBreathing:  document.getElementById('subtext-breathing'),
+        readoutHrv:        document.getElementById('readout-hrv'),
+        subtextHrv:        document.getElementById('subtext-hrv'),
+        readoutExpression: document.getElementById('readout-expression'),
+        subtextExpression: document.getElementById('subtext-expression'),
+        btnToggleSound:    document.getElementById('btn-toggle-sound'),
+        soundIcon:         document.getElementById('sound-icon'),
+        soundText:         document.getElementById('sound-text'),
+        selectPreset:      document.getElementById('select-preset'),
+        sliderVolume:      document.getElementById('slider-volume'),
+        modalConsent:      document.getElementById('modal-consent'),
+        btnConsentAgree:   document.getElementById('btn-consent-agree'),
+        modalSettings:     document.getElementById('modal-settings'),
+        inputApiKey:       document.getElementById('input-api-key'),
+        btnSaveSettings:   document.getElementById('btn-save-settings'),
+        btnCloseSettings:  document.getElementById('btn-close-settings'),
+        linkRegister:      document.getElementById('link-register'),
+    };
+
     // 1. Initialize Visualizer & Audio Synth
     visualizer = new BioVisualizer(els.canvas);
     visualizer.start();
 
     synth = new BioSynth();
     synth.onHeartbeat = (bpm) => {
-        visualizer.triggerHeartbeat(bpm);
+        if (visualizer) visualizer.triggerHeartbeat(bpm);
     };
 
     // 2. Initialize Synthetic Simulator
@@ -109,7 +111,7 @@ async function initApp() {
 
     // 4. Check Consent Gate
     const hasConsented = localStorage.getItem('pulsetones_consented') === 'true';
-    if (!hasConsented) {
+    if (!hasConsented && els.modalConsent) {
         els.modalConsent.classList.add('active');
     }
 
@@ -195,11 +197,13 @@ function setupEventListeners() {
 }
 
 function updateStatusBadge(status, label) {
+    if (!els.statusBadge || !els.statusText) return;
     els.statusBadge.className = 'status-badge ' + status.toLowerCase();
     els.statusText.textContent = label;
 }
 
 function showValidationHint(text, type = 'ok') {
+    if (!els.validationPill || !els.validationText) return;
     els.validationPill.style.display = 'flex';
     els.validationPill.className = `validation-pill ${type}`;
     els.validationText.textContent = text;
@@ -220,7 +224,6 @@ async function startLiveCamera() {
         stopSimulation();
     }
 
-    // Initialize Web Audio Engine on explicit user click
     if (!synth.isRunning) {
         synth.init();
     }
@@ -300,20 +303,16 @@ function buildSdk() {
 function handleLiveMetrics(metrics) {
     if (!metrics) return;
 
-    // 1. Cardio / Pulse
     const latestPulse = metrics.cardio?.pulseRate?.at(-1)?.value;
     const latestPressureWave = metrics.cardio?.arterialPressureTrace?.at(-1)?.value;
     const latestHrv = metrics.cardio?.hrv?.at(-1)?.rmssd;
 
-    // 2. Respiration / Breathing
     const latestBreathingRate = metrics.breathing?.rate?.at(-1)?.value;
     const latestChestTrace = metrics.breathing?.upperTrace?.at(-1)?.value ??
                              metrics.breathing?.lowerTrace?.at(-1)?.value;
 
-    // 3. Face & Expression
     const expression = metrics.face?.expression?.at(-1);
 
-    // Update HUD Numbers
     if (typeof latestPulse === 'number' && latestPulse > 0) {
         els.readoutPulse.textContent = Math.round(latestPulse);
         els.subtextPulse.textContent = 'Stable rPPG cardiac rhythm';
@@ -336,7 +335,6 @@ function handleLiveMetrics(metrics) {
         els.subtextExpression.textContent = isSmiling ? 'Harmonic chime cascade triggered!' : 'Smile to trigger chimes';
     }
 
-    // Push to BioSynth and BioVisualizer
     synth.updateMetrics({
         pulseRate: latestPulse,
         respirationRate: latestBreathingRate,
@@ -412,7 +410,6 @@ function handleSimulatorMetrics(data) {
     els.readoutExpression.textContent = data.expression.smile ? 'Smiling 😊' : 'Calm 🧘';
     els.subtextExpression.textContent = data.expression.smile ? 'Crystalline chime cascade!' : 'Smile to trigger chimes';
 
-    // Route into Audio & Canvas
     synth.updateMetrics({
         pulseRate: data.pulseRate,
         respirationRate: data.respirationRate,

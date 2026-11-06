@@ -4,6 +4,10 @@
 class BioVisualizer {
     constructor(canvas) {
         this.canvas = canvas;
+        if (!canvas) {
+            console.error('[BioVisualizer] canvas element not provided');
+            return;
+        }
         this.ctx = canvas.getContext('2d');
         this.animId = null;
 
@@ -45,19 +49,22 @@ class BioVisualizer {
     }
 
     resize() {
+        if (!this.canvas) return;
         const dpr = window.devicePixelRatio || 1;
         const rect = this.canvas.getBoundingClientRect();
-        this.width = rect.width;
-        this.height = rect.height;
+        this.width = rect.width || window.innerWidth || 1000;
+        this.height = rect.height || window.innerHeight || 700;
 
         this.canvas.width = this.width * dpr;
         this.canvas.height = this.height * dpr;
-        this.ctx.resetTransform?.();
-        this.ctx.scale(dpr, dpr);
+        if (this.ctx) {
+            this.ctx.resetTransform?.();
+            this.ctx.scale(dpr, dpr);
+        }
     }
 
     start() {
-        if (this.animId) return;
+        if (this.animId || !this.ctx) return;
         const loop = () => {
             this.draw();
             this.animId = requestAnimationFrame(loop);
@@ -76,7 +83,7 @@ class BioVisualizer {
         this.currentBpm = bpm || this.currentBpm;
         this.shockwaves.push({
             radius: 20,
-            maxRadius: Math.min(this.width, this.height) * 0.45,
+            maxRadius: Math.min(this.width || 800, this.height || 600) * 0.45,
             alpha: 0.85,
             speed: 3.8
         });
@@ -100,7 +107,7 @@ class BioVisualizer {
 
     draw() {
         const { ctx, width, height } = this;
-        if (!width || !height) return;
+        if (!ctx || !width || !height) return;
 
         // Dark ambient background fade
         ctx.fillStyle = '#0a0d14';
@@ -173,7 +180,6 @@ class BioVisualizer {
 
     drawCentralBioOrb(cx, cy) {
         const { ctx } = this;
-        // Breathing modulates radius expansion
         const breathExpansion = (this.currentRespiration + 1) * 22; // 0 to 44px
         const baseRadius = 60 + breathExpansion;
 
@@ -214,8 +220,8 @@ class BioVisualizer {
     drawWaveforms() {
         const { ctx, width, height } = this;
         const waveHeight = 70;
-        const startY1 = height - 90; // Pulse Waveform bottom
-        const startY2 = height - 25; // Breath Waveform bottom
+        const startY1 = height - 90;
+        const startY2 = height - 25;
 
         // 1. Arterial Pressure / Pulse Waveform (Coral/Pink)
         this.renderTraceLine(
@@ -248,7 +254,7 @@ class BioVisualizer {
 
         const step = width / (len - 1);
         for (let i = 0; i < len; i++) {
-            const val = buffer[i]; // range -1 to 1 or normalized
+            const val = buffer[i];
             const y = baselineY - (val * amplitude * 0.5);
             const x = i * step;
             if (i === 0) {

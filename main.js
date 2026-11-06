@@ -7,6 +7,11 @@ const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
 // Load environment variables from .env if present
 require('dotenv').config();
 
+// Disable hardware acceleration to prevent Chromium GPU crash (0xC0000005) on Windows
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-software-rasterizer');
+
 // In a packaged build, relocate native C-API library
 if (app.isPackaged && !process.env.SMARTSPECTRA_CAPI_PATH) {
     const LIB = {
@@ -32,7 +37,6 @@ function createWindow() {
         minHeight: 720,
         backgroundColor: '#0a0d14',
         title: 'PulseTones — Bio-Acoustic Generative Soundscape',
-        icon: path.join(__dirname, 'assets', 'icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -45,6 +49,24 @@ function createWindow() {
     bindSmartSpectraIpc(mainWindow);
 
     mainWindow.setMenuBarVisibility(false);
+
+    // Diagnostics
+    mainWindow.webContents.on('did-finish-load', () => {
+        console.log('[main] UI loaded successfully');
+    });
+
+    mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
+        console.error('[main] did-fail-load:', code, desc);
+    });
+
+    mainWindow.webContents.on('preload-error', (e, p, err) => {
+        console.error('[main] preload-error in', p, ':', err);
+    });
+
+    mainWindow.webContents.on('console-message', (e, level, message) => {
+        console.log('[renderer]', message);
+    });
+
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -76,7 +98,6 @@ app.whenReady().then(() => {
         const url = (details && details.requestingUrl) || (wc && wc.getURL()) || '';
         const mediaTypes = (details && details.mediaTypes) || [];
         const cameraOnly = mediaTypes.length === 1 && mediaTypes[0] === 'video';
-        // Only grant camera permission to local application files
         callback(permission === 'media' && cameraOnly && url.startsWith('file://'));
     });
 

@@ -56,6 +56,7 @@ async function initApp() {
         statusText:        document.getElementById('status-text'),
         btnToggleCamera:   document.getElementById('btn-toggle-camera'),
         btnCameraText:     document.getElementById('btn-camera-text'),
+        btnQuickSwitch:    document.getElementById('btn-quick-switch'),
         btnTriggerSmile:   document.getElementById('btn-trigger-smile'),
         btnTriggerBreath:  document.getElementById('btn-trigger-breath'),
         btnOpenSettings:   document.getElementById('btn-open-settings'),
@@ -170,6 +171,11 @@ function setupEventListeners() {
         });
     }
 
+    // Quick Switch to Live Camera CTA beneath demo preview
+    els.btnQuickSwitch?.addEventListener('click', () => {
+        startLiveCamera();
+    });
+
     // Camera / Demo Mode Toggle
     els.btnToggleCamera?.addEventListener('click', () => {
         if (isLiveCameraRunning) {
@@ -282,6 +288,7 @@ function startSimulation() {
     els.demoFaceCanvas.style.display = 'block';
     els.cameraPlaceholder.style.display = 'none';
     els.cameraModeLabel.textContent = 'rPPG Optical Scan (Demo Mode)';
+    if (els.btnQuickSwitch) els.btnQuickSwitch.style.display = 'flex';
 
     els.btnCameraText.textContent = 'Switch to Live Webcam';
     els.btnToggleCamera.className = 'btn btn-secondary';
@@ -374,6 +381,7 @@ async function startLiveCamera() {
         els.demoFaceCanvas.style.display = 'none';
         els.preview.style.display = 'block';
         els.cameraModeLabel.textContent = 'Live Webcam Stream (rPPG)';
+        if (els.btnQuickSwitch) els.btnQuickSwitch.style.display = 'none';
 
         updateStatusBadge('running', 'Live Camera Measuring');
     } catch (err) {

@@ -1,8 +1,7 @@
 ---
-title: PulseTones: Real-Time Bio-Acoustic Generative Soundscape with SmartSpectra
-published: true
+title: PulseTones: Real-Time Bio-Acoustic Generative Soundscape with SmartSpectra SDK
+published: false
 tags: devchallenge, presagechallenge, ai, audio
-cover_image: 
 ---
 
 *This is a submission for the [Presage SmartSpectra SDK Challenge](https://dev.to/challenges/presage-2026-11-04)*
@@ -11,80 +10,114 @@ cover_image:
 
 **PulseTones** is an interactive, contactless bio-acoustic experience that translates the hidden rhythms of the human body into a generative ambient music soundscape and bioluminescent visual installation.
 
-Using an ordinary webcam and the **Presage SmartSpectra SDK**, PulseTones reads your heart rate, respiratory waveforms, HRV autonomic balance, and facial expressions in real-time through remote photoplethysmography (rPPG). Instead of displaying passive medical charts, PulseTones turns your physiological state into an auditory breathing meditation:
-- Inhaling opens an analog-style lowpass filter, flooding the room with bright, shimmering harmonics.
-- Exhaling calms the soundscape into deep, grounding meditative roots.
-- Your pulse drives a warm sub-bass acoustic rhythm and synchronized bioluminescent shockwaves.
-- Smiling triggers a crystalline cascading pentatonic chime arpeggio.
+Using an ordinary webcam and the **Presage SmartSpectra SDK**, PulseTones reads your heart rate, respiratory waveforms, HRV autonomic balance, and facial expressions in real-time through remote photoplethysmography (rPPG). Instead of displaying clinical medical charts, PulseTones turns your physiological state into an auditory breathing meditation:
 
-The application includes both **Live Camera Capture** (powered by SmartSpectra) and an offline **High-Fidelity Bio-Simulation Mode** so judges and users can explore the acoustics with or without a webcam.
+- **Respiratory Swell:** Inhaling opens an analog-style 24dB resonant lowpass filter, flooding the room with bright, shimmering harmonics; exhaling calms the soundscape into deep, grounding sub-bass roots.
+- **Cardiovascular Rhythm:** Your pulse rate drives a warm acoustic sub-bass pulse (~56Hz to 36Hz downward sweep) and synchronized bioluminescent shockwaves across the display.
+- **Autonomic Shimmer:** High HRV coherence introduces lush 9th and 11th modal chords with stereo spatial diffusion, easing cognitive tension.
+- **Affect Chimes:** Smiling triggers a cascade of crystalline pentatonic chime arpeggios that twinkle across the stereo field.
+
+To make the app instantly accessible to anyone without requiring them to sit in front of a live camera or share personal video, PulseTones features a **Photorealistic AI Benchmark Subject Demo Mode** alongside full **Live Camera Mode**. The demo runs an authentic 512×512 biometric video loop overlaid with a real-time 3D facial landmark mesh, pulsing rPPG forehead and cheek ROI tracking boxes, and active sweep lasers.
 
 ---
 
 ## Demo
 
-<!-- Embed your demo video URL below showing the live Presage signals in action -->
-{% embed https://youtu.be/YOUR_DEMO_VIDEO_ID %}
+<!-- Paste your YouTube, Vimeo, or Loom video link below -->
+*(Demo walkthrough: shows camera initialization, face alignment, live pulse & respiration waveforms locking in, and the Web Audio synthesizer responding dynamically to deep breaths and smiles)*
 
-*(Demo video walkthrough: shows camera initialization, face alignment, live pulse & respiration waveforms locking in, and the Web Audio synthesizer responding dynamically to deep breaths and smiles!)*
+> **Interactive Experience Highlights:**
+> 1. **Live Camera & Demo Mode Toggle:** Seamless zero-friction switching between live webcam rPPG sensing and photorealistic AI subject benchmark simulation.
+> 2. **Bioluminescent Sacred Mandala:** Central 60fps canvas engine expanding on respiration and radiating shockwaves on each cardiac pulse.
+> 3. **Dual Elevated Oscilloscopes:** Real-time arterial pulse waveform (`♥ Arterial Pulse`) in neon magenta and respiratory tidal wave (`≋ Respiration Tidal Wave`) in luminous cyan.
+> 4. **Procedural Web Audio Engine:** Switchable harmonic environments: *Celestial Calm (C Minor 9)*, *Deep Forest (D Pentatonic)*, and *Ocean Mist (A Sus2)*.
 
 ---
 
 ## Code
 
 The complete source code is open source on GitHub:
-👉 **[github.com/YTxFSGAMERz/pulse-tones](https://github.com/YTxFSGAMERz/pulse-tones)**
+
+👉 **[https://github.com/YTxFSGAMERz/pulse-tones](https://github.com/YTxFSGAMERz/pulse-tones)**
 
 ### Quick Setup Instructions
+
 ```bash
+# 1. Clone the repository
 git clone https://github.com/YTxFSGAMERz/pulse-tones.git
 cd pulse-tones
+
+# 2. Install dependencies
 npm install
+
+# 3. Add your Presage API Key (or use in-app Settings dialog)
+cp .env.example .env
+# Edit .env with your SMARTSPECTRA_API_KEY
+
+# 4. Start the application
 npm start
 ```
-*(Enter your free Presage API key via `.env` or in the in-app Settings dialog).*
 
 ---
 
 ## How It Responds to Human Signals
 
-PulseTones maps multiple synchronous telemetry streams from the SmartSpectra SDK into a procedural Web Audio API synthesis engine:
+PulseTones maps four continuous physiological signal streams from the Presage SmartSpectra SDK into procedural Web Audio API synthesis nodes and HTML5 Canvas visuals:
+
+```
+                      ┌───────────────────────────────────────────────┐
+                      │          Presage SmartSpectra SDK             │
+                      │       Remote Photoplethysmography (rPPG)      │
+                      └───────┬──────────────┬─────────────┬──────────┘
+                              │              │             │
+                    Pulse Rate│   Respiration│          HRV│  Expression
+                        (BPM) │       Waveform│      (RMSSD)│  (Smile / Serene)
+                              ▼              ▼             ▼          ▼
+        ┌─────────────────────┼──────────────┼─────────────┼──────────┐
+        │                     │              │             │          │
+        │  [Sub-Bass Thump]   │ [Biquad LPF] │ [Harmonics] │ [Chimes] │
+        │  56Hz->36Hz Sine    │ 220Hz-2400Hz │ Modals 9/11 │ Pentatonic│
+        │  Musical Clock      │ Resonance Q=4│ Stereo Ping │ Arpeggio │
+        │                     │              │             │          │
+        │               Web Audio API Procedural Synthesizer          │
+        └─────────────────────────────────────────────────────────────┘
+```
 
 1. **Pulse Rate (rPPG):**  
-   Extracted from subtle facial micro-color oscillations. Converted from BPM into a musical tempo clock that schedules a resonant sub-bass sine thump (~56Hz to 36Hz downward sweep) and pulses the central bioluminescent orb.
+   The SDK detects microscopic capillary color oscillations across the forehead and cheek regions of interest (ROI). This BPM value synchronizes an internal high-resolution audio clock scheduling a dual-sine sub-bass pulse and triggers radial bioluminescent shockwaves on the canvas.
 2. **Respiratory Movement (Breathing Trace):**  
-   Continuous upper/lower chest waveforms modulate a 24dB/octave resonant lowpass biquad filter. Inhaling increases filter cutoff up to 2400 Hz (brightening the acoustic field); exhaling rolls off high frequencies down to 220 Hz.
+   Continuous tidal volume shifts dynamically sweep a 4-pole 24dB/octave resonant lowpass biquad filter. Inhaling lifts the cutoff from 220 Hz up to 2400 Hz (brightening the acoustic field); exhaling slowly rolls off the frequencies for parasympathetic relaxation.
 3. **Heart Rate Variability (HRV RMSSD):**  
-   High HRV (autonomic relaxation) introduces rich 9th and 11th intervals and spatial delay diffusion; lower HRV subdues harmonic complexity to root fifths to encourage parasympathetic grounding.
-4. **Expression Classification:**  
-   When the SDK detects a smile or positive valence, an arpeggiator fires a high-register pentatonic chime cascade across the stereo field.
+   Measures inter-beat interval consistency. Higher autonomic coherence blends in suspended 9th and major 7th chord tones with ping-pong delay diffusion; lower coherence shifts the voicing to pure fifths to anchor and stabilize the listener.
+4. **Affect & Expression:**  
+   When facial landmark valence indicates a smile, an expressive chime engine triggers high-register bell tones (FM synthesis with bell partials) panned across the stereo spectrum.
 
-All SmartSpectra events (`metrics`, `validationStatus`, `processingStatus`, `streamAvailable`) are marshaled across Electron's isolated context bridge via high-performance MessagePorts.
+All SDK events (`metrics`, `validationStatus`, `processingStatus`, `streamAvailable`) are communicated from Electron's main process to the isolated renderer process via high-performance IPC channels with zero telemetry lag.
 
 ---
 
 ## Prize Categories
 
 ### Most Creative or Delightful Use
-PulseTones transforms what is traditionally viewed as clinical telemetry into an intimate artistic instrument. Rather than measuring humans for surveillance or anxiety-inducing vital metrics, PulseTones celebrates bio-rhythms as music. The tactile feeling of hearing your breath alter the resonance of an ambient synth in real time—with no wearables, sensors, or wires—creates an unexpected and deeply calming experience of pure delight.
+
+PulseTones reimagines biometric sensing not as a cold clinical diagnostic tool, but as an intimate, playful instrument of human expression and mindfulness. 
+
+Rather than confronting the user with anxiety-provoking medical meters and warning thresholds, PulseTones turns the body's subconscious rhythms into ambient music. You do not just *see* your vitals—you *feel* your heart setting the tempo of an ethereal chord progression, you *hear* your lungs modulating the warmth of the room, and a simple smile brightens the atmosphere with chimes. 
+
+By eliminating the need for awkward pulse oximeters, smartwatches, or chest straps, and by including a photorealistic AI benchmark subject for effortless zero-camera exploration, PulseTones offers a delightful, accessible glimpse into the future of ambient human-computer resonance.
 
 ---
 
 ## Consent and Data Handling
 
-- **Explicit Consent Gate:** The application presents an unskippable Consent Modal on first launch. Camera streams remain inactive until the user grants explicit permission.
-- **Strictly Local In-Memory Processing:** Video frames are analyzed purely on-device in volatile RAM by the native SmartSpectra SDK runtime.
+Privacy and consent are fundamental architectural pillars of PulseTones:
+
+- **Explicit Consent Gate:** The application presents an unskippable Camera Consent Modal upon first launch. No camera devices are initialized or queried until the user explicitly clicks "I Understand & Consent".
+- **Strictly Local In-Memory Processing:** All video frames from the webcam are analyzed in volatile memory on-device by the native SmartSpectra SDK. 
 - **Zero Video or Biometric Storage:** No camera frames, photos, recordings, or facial scans are ever written to disk, retained, or transmitted over the network.
-- **No Identification or Surveillance:** The system performs aggregate rPPG optical analysis; no facial recognition or user identity profiling exists.
-- **Non-Medical Disclaimer:** PulseTones is an artistic generative soundscape. It makes no medical claims, provides no diagnostic or therapeutic output, and is not for clinical decision-making.
+- **No Facial Recognition or Tracking:** The optical algorithm analyzes aggregate pixel reflectance for rPPG signal extraction; no biometric templates, facial recognition, or identity fingerprints are created.
+- **Non-Medical Disclaimer:** PulseTones is strictly an artistic generative soundscape and mindfulness aid. It is **not** a medical device, makes no diagnostic or therapeutic claims, and is not designed or intended for clinical decision-making.
 
 ---
 
-## Agent Session
-
-<!-- Optional: upload your agent session transcript at dev.to/agent_sessions/new and embed it below -->
-{% embed https://dev.to/agent_sessions/YOUR_SESSION_ID %}
-
----
-
-*Built with passion for the DEV.to community & Presage Technologies!*
+*Crafted with ❤️ for the DEV.to Community and the Presage SmartSpectra SDK Challenge.*

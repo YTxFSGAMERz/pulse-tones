@@ -14,8 +14,9 @@ const { decodeMetrics } = require('@smartspectra/node-sdk/messages');
 const { BioSynth } = require('./audio/bioSynth');
 const { BioVisualizer } = require('./visuals/bioVisualizer');
 const { BioSimulator } = require('./simulator/bioSimulator');
+const { DemoFaceCanvas } = require('./visuals/demoFaceCanvas');
 
-// DOM Element Handles (populated in initApp)
+// DOM Element Handles
 let els = {};
 
 // Core Engines
@@ -23,6 +24,7 @@ let sdk = null;
 let synth = null;
 let visualizer = null;
 let simulator = null;
+let demoFace = null;
 let currentApiKey = '';
 let isLiveCameraRunning = false;
 let isSimulationRunning = false;
@@ -47,12 +49,15 @@ const VALIDATION_MESSAGES = {
 async function initApp() {
     els = {
         canvas:            document.getElementById('bio-canvas'),
+        demoFaceCanvas:    document.getElementById('demo-face-canvas'),
         preview:           document.getElementById('preview'),
         cameraPlaceholder: document.getElementById('camera-placeholder'),
         statusBadge:       document.getElementById('status-badge'),
         statusText:        document.getElementById('status-text'),
         btnToggleCamera:   document.getElementById('btn-toggle-camera'),
-        btnToggleSim:      document.getElementById('btn-toggle-sim'),
+        btnCameraText:     document.getElementById('btn-camera-text'),
+        btnTriggerSmile:   document.getElementById('btn-trigger-smile'),
+        btnTriggerBreath:  document.getElementById('btn-trigger-breath'),
         btnOpenSettings:   document.getElementById('btn-open-settings'),
         btnOpenPrivacy:    document.getElementById('btn-open-privacy'),
         validationPill:    document.getElementById('validation-pill'),
@@ -68,8 +73,9 @@ async function initApp() {
         btnToggleSound:    document.getElementById('btn-toggle-sound'),
         soundIcon:         document.getElementById('sound-icon'),
         soundText:         document.getElementById('sound-text'),
-        selectPreset:      document.getElementById('select-preset'),
+        presetPills:       document.querySelectorAll('.preset-pill'),
         sliderVolume:      document.getElementById('slider-volume'),
+        cameraModeLabel:   document.getElementById('camera-mode-label'),
         modalConsent:      document.getElementById('modal-consent'),
         btnConsentAgree:   document.getElementById('btn-consent-agree'),
         modalSettings:     document.getElementById('modal-settings'),
@@ -79,21 +85,26 @@ async function initApp() {
         linkRegister:      document.getElementById('link-register'),
     };
 
-    // 1. Initialize Visualizer & Audio Synth
+    // 1. Initialize Main Bio-Visualizer Canvas
     visualizer = new BioVisualizer(els.canvas);
     visualizer.start();
 
+    // 2. Initialize Holographic Face Scanner Canvas for Demo Mode
+    demoFace = new DemoFaceCanvas(els.demoFaceCanvas);
+    demoFace.start();
+
+    // 3. Initialize Audio Synthesizer
     synth = new BioSynth();
     synth.onHeartbeat = (bpm) => {
         if (visualizer) visualizer.triggerHeartbeat(bpm);
     };
 
-    // 2. Initialize Synthetic Simulator
+    // 4. Initialize Synthetic Simulator
     simulator = new BioSimulator((simData) => {
         handleSimulatorMetrics(simData);
     });
 
-    // 3. Load API Key from Environment Bridge or LocalStorage
+    // 5. Load API Key
     try {
         if (window.pulseTonesApp?.getEnvApiKey) {
             currentApiKey = await window.pulseTonesApp.getEnvApiKey();
@@ -109,37 +120,43 @@ async function initApp() {
         els.inputApiKey.value = currentApiKey;
     }
 
-    // 4. Check Consent Gate
+    // 6. Check Consent Gate
     const hasConsented = localStorage.getItem('pulsetones_consented') === 'true';
     if (!hasConsented && els.modalConsent) {
         els.modalConsent.classList.add('active');
     }
 
     setupEventListeners();
+
+    // 7. Auto-start in Demo Mode by default (100% camera-free)
+    startSimulation();
 }
 
 function setupEventListeners() {
     // Consent Modal
-    els.btnConsentAgree.addEventListener('click', () => {
+    els.btnConsentAgree?.addEventListener('click', () => {
         localStorage.setItem('pulsetones_consented', 'true');
         els.modalConsent.classList.remove('active');
+        if (!synth.isRunning) {
+            synth.init();
+        }
     });
 
-    els.btnOpenPrivacy.addEventListener('click', () => {
+    els.btnOpenPrivacy?.addEventListener('click', () => {
         els.modalConsent.classList.add('active');
     });
 
     // Settings Modal
-    els.btnOpenSettings.addEventListener('click', () => {
+    els.btnOpenSettings?.addEventListener('click', () => {
         els.inputApiKey.value = currentApiKey;
         els.modalSettings.classList.add('active');
     });
 
-    els.btnCloseSettings.addEventListener('click', () => {
+    els.btnCloseSettings?.addEventListener('click', () => {
         els.modalSettings.classList.remove('active');
     });
 
-    els.btnSaveSettings.addEventListener('click', () => {
+    els.btnSaveSettings?.addEventListener('click', () => {
         currentApiKey = els.inputApiKey.value.trim();
         localStorage.setItem('smartspectra_api_key', currentApiKey);
         els.modalSettings.classList.remove('active');
@@ -155,26 +172,56 @@ function setupEventListeners() {
         });
     }
 
-    // Camera Toggle
-    els.btnToggleCamera.addEventListener('click', () => {
+    // Camera / Demo Mode Toggle
+    els.btnToggleCamera?.addEventListener('click', () => {
         if (isLiveCameraRunning) {
+            // Switch back to Demo Simulation
             stopLiveCamera();
+            startSimulation();
         } else {
+            // Switch to Live Webcam
             startLiveCamera();
         }
     });
 
-    // Simulation Toggle
-    els.btnToggleSim.addEventListener('click', () => {
-        if (isSimulationRunning) {
-            stopSimulation();
-        } else {
-            startSimulation();
-        }
+    // Demo Action: Smile Trigger (for recording video demo)
+    els.btnTriggerSmile?.addEventListener('click', () => {
+        if (!synth.isRunning) synth.init();
+        synth.triggerSmileFlourish();
+        if (demoFace) demoFace.isSmiling = true;
+        els.readoutExpression.textContent = 'Smiling 😊';
+        els.subtextExpression.textContent = 'Harmonic chime cascade triggered!';
+        setTimeout(() => {
+            if (demoFace) demoFace.isSmiling = false;
+            els.readoutExpression.textContent = 'Serene';
+            els.subtextExpression.textContent = 'Smile to trigger chimes';
+        }, 2500);
+    });
+
+    // Demo Action: Deep Breath Trigger
+    els.btnTriggerBreath?.addEventListener('click', () => {
+        if (!synth.isRunning) synth.init();
+        // Simulate deep inhale then exhale
+        synth.updateMetrics({
+            pulseRate: 68,
+            respirationWave: 1.0,
+            respirationRate: 10,
+            hrvRmssd: 72,
+        });
+        showValidationHint('Deep Meditative Inhale — Resonant Filter Sweeping Bright', 'ok');
+        setTimeout(() => {
+            synth.updateMetrics({
+                pulseRate: 70,
+                respirationWave: -0.8,
+                respirationRate: 10,
+                hrvRmssd: 75,
+            });
+            showValidationHint('Slow Calming Exhale — Settling into Warm Grounding Drone', 'ok');
+        }, 2200);
     });
 
     // Audio Controls
-    els.btnToggleSound.addEventListener('click', () => {
+    els.btnToggleSound?.addEventListener('click', () => {
         if (!synth.isRunning) {
             synth.init();
         }
@@ -183,16 +230,23 @@ function setupEventListeners() {
         els.soundText.textContent = muted ? 'Unmute' : 'Mute';
     });
 
-    els.sliderVolume.addEventListener('input', (e) => {
+    els.sliderVolume?.addEventListener('input', (e) => {
         if (synth) {
             synth.setVolume(parseFloat(e.target.value));
         }
     });
 
-    els.selectPreset.addEventListener('change', (e) => {
-        if (synth) {
-            synth.setPreset(e.target.value);
-        }
+    // Preset Segmented Pill Tabs
+    els.presetPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            els.presetPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const presetName = pill.getAttribute('data-preset');
+            if (synth) {
+                synth.setPreset(presetName);
+            }
+            showValidationHint(`Soundscape Preset: ${pill.textContent.trim()}`, 'ok');
+        });
     });
 }
 
@@ -210,7 +264,86 @@ function showValidationHint(text, type = 'ok') {
 }
 
 // ==========================================
-// LIVE CAMERA & SMARTSPECTRA INTEGRATION
+// DEMO SIMULATION MODE (100% CAMERA-FREE)
+// ==========================================
+
+function startSimulation() {
+    if (isLiveCameraRunning) {
+        stopLiveCamera();
+    }
+
+    if (!synth.isRunning) {
+        synth.init();
+    }
+
+    isSimulationRunning = true;
+    simulator.start();
+
+    // Show Demo Holographic Face Scanner
+    els.preview.style.display = 'none';
+    els.demoFaceCanvas.style.display = 'block';
+    els.cameraPlaceholder.style.display = 'none';
+    els.cameraModeLabel.textContent = 'rPPG Optical Scan (Demo Mode)';
+
+    els.btnCameraText.textContent = 'Switch to Live Webcam';
+    els.btnToggleCamera.className = 'btn btn-secondary';
+
+    updateStatusBadge('simulation', 'Demo Bio-Simulation Active');
+    showValidationHint('Running High-Fidelity Bio-Waveform Simulation (No Camera Required)', 'ok');
+}
+
+function handleSimulatorMetrics(data) {
+    els.readoutPulse.textContent = data.pulseRate;
+    els.subtextPulse.textContent = 'Acoustic sub-bass pulse rhythm';
+
+    els.readoutBreathing.textContent = data.respirationRate;
+    els.subtextBreathing.textContent = data.respirationWave > 0 ? 'Inhaling (Filter Opening)' : 'Exhaling (Warm Lowpass)';
+
+    els.readoutHrv.textContent = data.hrvRmssd;
+    els.subtextHrv.textContent = data.hrvRmssd > 50 ? 'High Coherence (Rich Shimmer)' : 'Grounding Bass Drone';
+
+    if (data.expression.smile) {
+        els.readoutExpression.textContent = 'Smiling 😊';
+        els.subtextExpression.textContent = 'Crystalline chime cascade!';
+    } else {
+        els.readoutExpression.textContent = 'Serene';
+        els.subtextExpression.textContent = 'Smile to trigger chimes';
+    }
+
+    // Update Holographic Face
+    if (demoFace) {
+        demoFace.updateState({
+            pulsePhase: Math.max(0, data.pulseWave),
+            breathWave: data.respirationWave,
+            smile: data.expression.smile,
+        });
+    }
+
+    // Route into Audio & Canvas
+    synth.updateMetrics({
+        pulseRate: data.pulseRate,
+        respirationRate: data.respirationRate,
+        respirationWave: data.respirationWave,
+        hrvRmssd: data.hrvRmssd,
+        expression: data.expression,
+    });
+
+    visualizer.pushMetrics({
+        pulseSample: data.pulseWave,
+        breathSample: data.respirationWave,
+        respirationNormalized: data.respirationWave,
+        bpm: data.pulseRate,
+        hrv: data.hrvRmssd,
+    });
+}
+
+function stopSimulation() {
+    isSimulationRunning = false;
+    simulator.stop();
+}
+
+// ==========================================
+// LIVE WEBCAM MODE (SMARTSPECTRA SDK)
 // ==========================================
 
 async function startLiveCamera() {
@@ -228,7 +361,7 @@ async function startLiveCamera() {
         synth.init();
     }
 
-    updateStatusBadge('starting', 'Connecting Camera...');
+    updateStatusBadge('starting', 'Connecting Webcam...');
     els.btnToggleCamera.disabled = true;
 
     try {
@@ -237,16 +370,21 @@ async function startLiveCamera() {
 
         isLiveCameraRunning = true;
         els.btnToggleCamera.disabled = false;
-        els.btnToggleCamera.className = 'btn btn-danger';
-        els.btnToggleCamera.querySelector('span').textContent = 'Stop Camera';
-        els.cameraPlaceholder.style.display = 'none';
+        els.btnCameraText.textContent = 'Switch to Demo Mode';
+        els.btnToggleCamera.className = 'btn btn-primary';
+
+        els.demoFaceCanvas.style.display = 'none';
+        els.preview.style.display = 'block';
+        els.cameraModeLabel.textContent = 'Live Webcam Stream (rPPG)';
+
         updateStatusBadge('running', 'Live Camera Measuring');
     } catch (err) {
         console.error('Failed to start SmartSpectra SDK:', err);
         updateStatusBadge('error', 'SDK Error');
-        showValidationHint(`Error: ${err.message || 'Check API Key / Camera'}`, 'err');
+        showValidationHint(`Error: ${err.message || 'Check Camera'}`, 'err');
         els.btnToggleCamera.disabled = false;
         stopLiveCamera();
+        startSimulation();
     }
 }
 
@@ -265,7 +403,8 @@ function buildSdk() {
     sdk.on('streamAvailable', (stream) => {
         els.preview.srcObject = stream;
         els.preview.play().catch(() => {});
-        els.cameraPlaceholder.style.display = 'none';
+        els.demoFaceCanvas.style.display = 'none';
+        els.preview.style.display = 'block';
     });
 
     sdk.on('processingStatus', (status) => {
@@ -320,7 +459,7 @@ function handleLiveMetrics(metrics) {
 
     if (typeof latestBreathingRate === 'number' && latestBreathingRate > 0) {
         els.readoutBreathing.textContent = Math.round(latestBreathingRate);
-        const breathPhase = (latestChestTrace || 0) > 0 ? 'Inhaling (Brightening Filter)' : 'Exhaling (Subduing Tone)';
+        const breathPhase = (latestChestTrace || 0) > 0 ? 'Inhaling (Filter Opening)' : 'Exhaling (Warm Lowpass)';
         els.subtextBreathing.textContent = breathPhase;
     }
 
@@ -367,79 +506,11 @@ async function stopLiveCamera() {
     }
 
     els.preview.srcObject = null;
-    els.cameraPlaceholder.style.display = 'flex';
-    els.btnToggleCamera.className = 'btn btn-primary';
-    els.btnToggleCamera.querySelector('span').textContent = 'Start Live Camera';
+    els.preview.style.display = 'none';
+    els.demoFaceCanvas.style.display = 'block';
     els.btnToggleCamera.disabled = false;
-    updateStatusBadge('idle', 'Standby');
-    els.validationPill.style.display = 'none';
-}
-
-// ==========================================
-// DEMO SIMULATION MODE
-// ==========================================
-
-function startSimulation() {
-    if (isLiveCameraRunning) {
-        stopLiveCamera();
-    }
-
-    if (!synth.isRunning) {
-        synth.init();
-    }
-
-    isSimulationRunning = true;
-    simulator.start();
-
-    els.btnToggleSim.className = 'btn btn-danger';
-    els.btnToggleSim.querySelector('span').textContent = 'Stop Simulation';
-    updateStatusBadge('simulation', 'Simulation Demo Active');
-    showValidationHint('Running High-Fidelity Bio-Waveform Simulation', 'ok');
-}
-
-function handleSimulatorMetrics(data) {
-    els.readoutPulse.textContent = data.pulseRate;
-    els.subtextPulse.textContent = 'Simulated rPPG Pulse (72 BPM)';
-
-    els.readoutBreathing.textContent = data.respirationRate;
-    els.subtextBreathing.textContent = data.respirationWave > 0 ? 'Inhaling (Opening Filter)' : 'Exhaling (Warm Lowpass)';
-
-    els.readoutHrv.textContent = data.hrvRmssd;
-    els.subtextHrv.textContent = 'High Coherence (Rich Shimmer)';
-
-    els.readoutExpression.textContent = data.expression.smile ? 'Smiling 😊' : 'Calm 🧘';
-    els.subtextExpression.textContent = data.expression.smile ? 'Crystalline chime cascade!' : 'Smile to trigger chimes';
-
-    synth.updateMetrics({
-        pulseRate: data.pulseRate,
-        respirationRate: data.respirationRate,
-        respirationWave: data.respirationWave,
-        hrvRmssd: data.hrvRmssd,
-        expression: data.expression,
-    });
-
-    visualizer.pushMetrics({
-        pulseSample: data.pulseWave,
-        breathSample: data.respirationWave,
-        respirationNormalized: data.respirationWave,
-        bpm: data.pulseRate,
-        hrv: data.hrvRmssd,
-    });
-}
-
-function stopSimulation() {
-    isSimulationRunning = false;
-    simulator.stop();
-
-    els.btnToggleSim.className = 'btn btn-secondary';
-    els.btnToggleSim.querySelector('span').textContent = 'Demo Simulation';
-    updateStatusBadge('idle', 'Standby');
-    els.validationPill.style.display = 'none';
-
-    els.readoutPulse.textContent = '--';
-    els.readoutBreathing.textContent = '--';
-    els.readoutHrv.textContent = '--';
-    els.readoutExpression.textContent = 'Serene';
+    els.btnCameraText.textContent = 'Switch to Live Webcam';
+    els.btnToggleCamera.className = 'btn btn-secondary';
 }
 
 // Clean Teardown on Window Close
@@ -449,6 +520,9 @@ window.addEventListener('beforeunload', () => {
     }
     if (simulator) {
         simulator.stop();
+    }
+    if (demoFace) {
+        demoFace.destroy();
     }
     if (synth) {
         synth.destroy();

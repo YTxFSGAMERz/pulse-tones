@@ -1,16 +1,35 @@
 // main.js - PulseTones Electron Main Process
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
 
-// Load environment variables from .env if present
-require('dotenv').config();
+const LOG_FILE = path.join(__dirname, 'startup.log');
+function log(msg, err) {
+    const text = `[${new Date().toISOString()}] ${msg} ${err ? err.stack || err : ''}\n`;
+    fs.appendFileSync(LOG_FILE, text, 'utf8');
+    console.log(text);
+}
 
-// Disable hardware acceleration to prevent Chromium GPU crash (0xC0000005) on Windows
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('disable-gpu');
-app.commandLine.appendSwitch('disable-software-rasterizer');
+fs.writeFileSync(LOG_FILE, '=== PulseTones Startup Log ===\n');
+log('Process started. Node version: ' + process.version + ', Electron: ' + process.versions.electron);
+
+process.on('uncaughtException', (err) => {
+    log('FATAL uncaughtException:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+    log('FATAL unhandledRejection:', reason);
+});
+
+// Load environment variables from .env if present
+try {
+    require('dotenv').config();
+    log('dotenv loaded');
+} catch (e) {
+    log('dotenv load failed:', e);
+}
 
 // In a packaged build, relocate native C-API library
 if (app.isPackaged && !process.env.SMARTSPECTRA_CAPI_PATH) {
@@ -25,60 +44,77 @@ if (app.isPackaged && !process.env.SMARTSPECTRA_CAPI_PATH) {
     }
 }
 
-const { bindSmartSpectraIpc } = require('@smartspectra/node-sdk/main');
+let bindSmartSpectraIpc = null;
+try {
+    const mainSdk = require('@smartspectra/node-sdk/main');
+    bindSmartSpectraIpc = mainSdk.bindSmartSpectraIpc;
+    log('@smartspectra/node-sdk/main loaded successfully');
+} catch (e) {
+    log('Failed to require @smartspectra/node-sdk/main:', e);
+}
 
 let mainWindow = null;
 
 function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 1240,
-        height: 840,
-        minWidth: 1024,
-        minHeight: 720,
-        backgroundColor: '#0a0d14',
-        title: 'PulseTones — Bio-Acoustic Generative Soundscape',
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            sandbox: false,
-            nodeIntegration: false,
-        },
-    });
+    log('createWindow called');
+    try {
+        mainWindow = new BrowserWindow({
+            width: 1240,
+            height: 840,
+            minWidth: 1024,
+            minHeight: 720,
+            backgroundColor: '#0a0d14',
+            title: 'PulseTones — Bio-Acoustic Generative Soundscape',
+            show: true,
+            webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
+                contextIsolation: true,
+                sandbox: false,
+                nodeIntegration: false,
+            },
+        });
+        log('BrowserWindow instance created');
 
-    // Bind SmartSpectra IPC messaging to this window
-    bindSmartSpectraIpc(mainWindow);
-
-    mainWindow.setMenuBarVisibility(false);
-
-    // Diagnostics
-    mainWindow.webContents.on('did-finish-load', () => {
-        console.log('[main] UI loaded successfully');
-    });
-
-    mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
-        console.error('[main] did-fail-load:', code, desc);
-    });
-
-    mainWindow.webContents.on('preload-error', (e, p, err) => {
-        console.error('[main] preload-error in', p, ':', err);
-    });
-
-    mainWindow.webContents.on('console-message', (e, level, message) => {
-        console.log('[renderer]', message);
-    });
-
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.startsWith('https://') || url.startsWith('http://')) {
-            shell.openExternal(url);
+        if (bindSmartSpectraIpc) {
+            bindSmartSpectraIpc(mainWindow);
+            log('bindSmartSpectraIpc wired');
         }
-        return { action: 'deny' };
-    });
 
-    mainWindow.on('closed', () => {
-        mainWindow = null;
-    });
+        mainWindow.setMenuBarVisibility(false);
+
+        mainWindow.webContents.on('did-finish-load', () => {
+            log('Renderer did-finish-load');
+        });
+
+        mainWindow.webContents.on('did-fail-load', (e, code, desc) => {
+            log(`Renderer did-fail-load: code=${code}, desc=${desc}`);
+        });
+
+        mainWindow.webContents.on('preload-error', (e, p, err) => {
+            log(`Renderer preload-error in ${p}:`, err);
+        });
+
+        mainWindow.webContents.on('console-message', (e, level, message) => {
+            log(`[Renderer Console] ${message}`);
+        });
+
+        mainWindow.loadFile(path.join(__dirname, 'index.html'));
+        log('mainWindow.loadFile(index.html) initiated');
+
+        mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+            if (url.startsWith('https://') || url.startsWith('http://')) {
+                shell.openExternal(url);
+            }
+            return { action: 'deny' };
+        });
+
+        mainWindow.on('closed', () => {
+            log('mainWindow closed');
+            mainWindow = null;
+        });
+    } catch (err) {
+        log('createWindow exception:', err);
+    }
 }
 
 // IPC Handlers
@@ -93,15 +129,19 @@ ipcMain.handle('open-external', async (event, url) => {
 });
 
 app.whenReady().then(() => {
-    // Explicit camera permission gate
-    session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) => {
-        const url = (details && details.requestingUrl) || (wc && wc.getURL()) || '';
-        const mediaTypes = (details && details.mediaTypes) || [];
-        const cameraOnly = mediaTypes.length === 1 && mediaTypes[0] === 'video';
-        callback(permission === 'media' && cameraOnly && url.startsWith('file://'));
-    });
+    log('app.whenReady fired');
+    try {
+        session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) => {
+            const url = (details && details.requestingUrl) || (wc && wc.getURL()) || '';
+            const mediaTypes = (details && details.mediaTypes) || [];
+            const cameraOnly = mediaTypes.length === 1 && mediaTypes[0] === 'video';
+            callback(permission === 'media' && cameraOnly && url.startsWith('file://'));
+        });
 
-    createWindow();
+        createWindow();
+    } catch (e) {
+        log('app.whenReady error:', e);
+    }
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -109,6 +149,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+    log('app window-all-closed');
     if (process.platform !== 'darwin') {
         app.quit();
     }

@@ -21,20 +21,21 @@ To make the app instantly accessible to anyone without requiring them to sit in 
 
 ---
 
-## Demo
+## Demo & Experience Showcase
 
-![PulseTones Live Bio-Acoustic Generative Experience](https://raw.githubusercontent.com/YTxFSGAMERz/pulse-tones/master/assets/pulse-tones-demo.gif)
+![PulseTones Live Bio-Acoustic Experience](https://raw.githubusercontent.com/YTxFSGAMERz/pulse-tones/master/assets/pulse-tones-preview.png)
 
-> 🎬 **Zero-Friction Evaluation:**  
-> The application includes a self-contained, pre-calibrated **Photorealistic AI Benchmark Subject Demo Mode** bundled into the repository. Judges and users can evaluate the full real-time rPPG optical scanning and dynamic Web Audio synthesis immediately upon running `npm start`—with no camera access, personal recording, or extra setup required!
->
-> 📽️ **High-Resolution Video Clip:** [Download / View MP4 on GitHub](https://github.com/YTxFSGAMERz/pulse-tones/blob/master/assets/pulse-tones-demo.mp4?raw=true)
+### Experience Highlights & Controls
 
-### Interactive Experience Highlights:
-1. **Live Camera & Demo Mode Toggle:** Seamless zero-friction switching between live webcam rPPG sensing and photorealistic AI subject benchmark simulation.
-2. **Bioluminescent Sacred Mandala:** Central 60fps canvas engine expanding on respiration and radiating shockwaves on each cardiac pulse.
-3. **Dual Elevated Oscilloscopes:** Real-time arterial pulse waveform (`♥ Arterial Pulse`) in neon magenta and respiratory tidal wave (`≋ Respiration Tidal Wave`) in luminous cyan.
-4. **Procedural Web Audio Engine:** Switchable harmonic environments: *Celestial Calm (C Minor 9)*, *Deep Forest (D Pentatonic)*, and *Ocean Mist (A Sus2)*.
+1. **Dual Elevated Oscilloscopes:**
+   - **♥ Arterial Pulse (rPPG):** High-cadence neon magenta oscilloscope rendering systolic peaks, dicrotic notches, and microvascular flow rate.
+   - **≋ Respiration Tidal Wave:** Luminous cyan oscilloscope tracking thoracic displacement and resonant lowpass filter modulation.
+2. **Central Bioluminescent Sacred Mandala:**
+   - Dynamic 60fps canvas engine expanding and contracting with respiration tidal volume while radiating shockwaves on each cardiac pulse.
+3. **Procedural Web Audio Engine:**
+   - Switchable harmonic environments: *Celestial Calm (C Minor 9)*, *Deep Forest (D Pentatonic)*, and *Ocean Mist (A Sus2)*.
+4. **Zero-Setup AI Simulation Mode:**
+   - Pre-calibrated photorealistic AI benchmark subject built right into the app so judges and users can run `npm start` and immediately explore the bio-acoustic synthesis without needing webcam access or personal video recording.
 
 ---
 

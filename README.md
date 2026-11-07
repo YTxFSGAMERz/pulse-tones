@@ -3,6 +3,8 @@
 > **Submission for the [Presage SmartSpectra SDK Challenge](https://dev.to/challenges/presage-2026-11-04)**  
 > **Prize Category Nomination:** *Most Creative or Delightful Use*
 
+![PulseTones Live Experience Showcase](assets/pulse-tones-preview.png)
+
 **PulseTones** is a contactless, real-time bio-acoustic ambient soundscape and bioluminescent visualizer. By using the **Presage SmartSpectra SDK**, PulseTones captures subtle optical human physiological signals (heart rate, breathing waveform, heart rate variability, and facial expressions) through an ordinary webcam via remote photoplethysmography (rPPG)—turning your physical state into an evolving generative ambient concert.
 
 ---
